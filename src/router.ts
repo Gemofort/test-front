@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 import Cars from './views/Cars.vue';
+import Car from './components/Car.vue';
 
 Vue.use(Router);
 
@@ -12,6 +13,11 @@ export default new Router({
       path: '/',
       name: 'landing',
       component: Cars,
+    },
+    {
+      path: '/cars/:id',
+      name: 'car',
+      component: Car,
     },
     {
       path: '**',

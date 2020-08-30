@@ -1,6 +1,5 @@
 <template>
   <div class="cars-wrapper">
-    <h1>Cars:</h1>
     <div class="cars">
       <div class="car" v-for="(car, i) in cars" :key="i">
         {{ car }}
@@ -20,6 +19,10 @@ export default class Car extends Vue {
 
   public mounted() {
     this.getCars();
+  }
+
+  get carId() {
+    return this.$route.params.id;
   }
 
   public getCars() {
