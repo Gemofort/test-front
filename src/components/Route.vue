@@ -11,11 +11,13 @@
       <app-input
         @input="changeState"
         class="car-field"
+        :readonly="route.status === 'done'"
         v-model="route.departure"
       >Departure:</app-input>
       <app-input
         @input="changeState"
         class="car-field"
+        :readonly="route.status === 'done'"
         v-model="route.arrival"
       >Arrival:</app-input>
       <!-- <app-input @input="changeState"
@@ -23,14 +25,21 @@
       <app-select
         :options="typeOptions"
         v-model="route.type"
+        v-if="!route.car && routeId !== 'create-route'"
         class="car-field"
         :selectTitle="route.type"
         @input="changeState"
       >Type</app-select>
+      <app-input
+        v-else
+        class="car-field"
+        :readonly="true"
+        v-model="route.type"
+      >Type</app-input>
       <app-select
         :options="this.cars"
         v-if="!route.car && routeId !== 'create-route'"
-        v-model="route.car"
+        v-model="route.newCar"
         class="car-field"
         selectTitle=""
         @input="changeState"
@@ -39,7 +48,7 @@
         v-else
         class="car-field"
         :readonly="true"
-        v-model="route.car.modelType"
+        v-model="carName"
       >Car</app-input>
       <app-input class="car-field" :readonly="true" v-model="route.status">Status:</app-input>
       <app-input
@@ -57,11 +66,18 @@
       <app-input
         class="car-field"
         @input="changeState"
+        :readonly="route.status === 'done'"
         v-model="route.distance"
       >Distance:</app-input>
       <app-input class="car-field" :readonly="true" v-model="route.earnings">Earnings:</app-input>
       <!-- <app-input class="car-field" :readonly="true" v-model="car.soldAt">Sold:</app-input> -->
-      <span @click="save(route)" class="btn-black">{{state}}</span>
+      <span v-if="route.status !== 'done'" @click="save" class="btn-black">{{state}}</span>
+      <p v-if="route.car && route.status !== 'done'">For test purposes only:</p>
+      <span
+        v-if="route.car && route.status !== 'done'"
+        @click="submitRoute"
+        class="btn-black wide"
+      >Submit route</span>
     </div>
   </div>
 </template>
@@ -84,7 +100,10 @@ export default class Route extends Vue {
     deliveredAt: null,
     earnings: 0,
     car: '',
+    newCar: '',
   };
+
+  public carName = '';
 
   public cars = [];
 
@@ -137,8 +156,22 @@ export default class Route extends Vue {
     delete routeReq.earnings;
     delete routeReq.status;
 
+    const carId = routeReq.newCar;
+
+    delete routeReq.newCar;
+
     if (this.routeId !== 'create-route') {
-      http.put(`/routes/${this.routeId}`, { ...routeReq }).then(() => {
+      const promises: Promise<any>[] = [];
+
+      console.info(routeReq);
+
+      promises.push(http.put(`/routes/${this.routeId}`, { ...routeReq }));
+
+      if (carId.length) {
+        promises.push(http.put(`/routes/${this.routeId}/cars`, { carId }));
+      }
+
+      Promise.all(promises).then(() => {
         this.state = 'Saved';
       });
     } else {
@@ -154,10 +187,20 @@ export default class Route extends Vue {
     }
   }
 
+  public submitRoute() {
+    http.put(`/routes/${this.routeId}/cars/${this.route.car}`, {}).then(() => {
+      this.$router.go(0);
+    });
+  }
+
   public getRoute() {
     if (this.routeId !== 'create-route') {
       http.get(`/routes/${this.routeId}`).then((res: any) => {
-        this.route = res;
+        this.route = { ...res };
+        // eslint-disable-next-line no-underscore-dangle
+        this.route.car = res.car._id;
+        console.info(res);
+        this.carName = res.car.modelType;
       });
     }
   }
@@ -174,6 +217,7 @@ interface IRoute {
   startedAt: Date | null;
   deliveredAt: Date | null;
   car: string;
+  newCar: string;
 }
 </script>
 
@@ -206,9 +250,16 @@ h1
   justify-content: center
   align-items: center
   cursor: pointer
+  &.wide
+    width: 200px
 
 .car-field
   margin-top: 20px
   width: 100%
   max-width: 260px
+
+p
+  color: $black
+  font-family: $Montserrat
+  font-size: 20px
 </style>
