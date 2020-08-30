@@ -1,12 +1,12 @@
 <template>
-  <div class="cars-wrapper">
+  <div class="routes-wrapper">
     <nav>
-      <p class="header-nav active">
+      <p class="header-nav">
         <router-link tag="a" to="/">
           Cars
         </router-link>
       </p>
-      <p class="header-nav">
+      <p class="header-nav active">
         <router-link tag="a" to="/routes">
           Routes
         </router-link>
@@ -16,51 +16,50 @@
       <div class="search-header">
         <app-input
           class="is-marginless"
-          v-model="searchPattern.modelType"
-          @input="searchCars()"
-        >Model</app-input>
+          v-model="searchPattern.departure"
+          @input="searchRoutes()"
+        >Departure</app-input>
+        <app-input
+          class="is-marginless"
+          v-model="searchPattern.arrival"
+          @input="searchRoutes()"
+        >Arrival</app-input>
         <app-select
           class="is-marginless"
           :options="typeOptions"
           v-model="searchPattern.type"
-          @input="searchCars()"
+          @input="searchRoutes()"
         >Type</app-select>
         <app-select
           class="is-marginless"
           :options="statusOptions"
           v-model="searchPattern.status"
-          @input="searchCars()"
+          @input="searchRoutes()"
         >Status</app-select>
-        <app-input
-          class="is-marginless"
-          v-model="searchPattern.numberPlate"
-          @input="searchCars()"
-        >Number Plate</app-input>
 
         <router-link
           tag="a"
-          to='/cars/create-car'
+          to='/routes/create-route'
           class="btn-black"
         >
-          Add car
+          Add route
         </router-link>
       </div>
 
-      <div class="cars">
-        <div class="car-instance-wrapper" v-for="(car, i) in cars" :key="i">
+      <div class="routes">
+        <div class="route-instance-wrapper" v-for="(route, i) in routes" :key="i">
           <router-link
             tag="a"
-            :to='`/cars/${car._id}`'
-            class="car"
+            :to='`/routes/${route._id}`'
+            class="route"
           >
-            <p class="car-column-count title">{{i + 1}}.</p>
-            <p class="car-column title">Model: {{ car.modelType }}</p>
-            <p class="car-column title">Type: {{ car.type }}</p>
-            <p class="car-column title">Status: {{ car.status }}</p>
-            <p class="car-column numberplate title">Number Plate: {{ car.numberPlate }}</p>
-            <p class="car-column title">Mileage: {{ car.mileage }} km</p>
+            <p class="route-column-count title">{{i + 1}}.</p>
+            <p class="route-column title">Model: {{ route.departure }}</p>
+            <p class="route-column title">Model: {{ route.arrival }}</p>
+            <p class="route-column title">Type: {{ route.type }}</p>
+            <p class="route-column title">Status: {{ route.status }}</p>
           </router-link>
-          <span @click="deleteCar(car._id, i)" class="delete-icon">
+          <span @click="deleteRoute(route._id, i)" class="delete-icon">
             <app-icon name="delete" ></app-icon>
           </span>
         </div>
@@ -76,8 +75,8 @@ import http from '@/utils/http';
 import * as qs from 'qs';
 
 @Component({})
-export default class Cars extends Vue {
-  public cars = [];
+export default class Routes extends Vue {
+  public routes = [];
 
   // [sedan, coupe, minivan, hatchback, truck, pickup truck, crossover]
 
@@ -94,35 +93,36 @@ export default class Cars extends Vue {
 
   public statusOptions = [
     { id: '', name: 'All' },
+    { id: 'done', name: 'Done' },
+    { id: 'pending', name: 'Pending' },
     { id: 'free', name: 'Free' },
-    { id: 'unavailable', name: 'Unavailable' },
   ];
 
   public searchPattern: SearchPattern = {
-    numberPlate: '',
+    departure: '',
     status: '',
     type: '',
-    modelType: '',
-  }
+    arrival: '',
+  };
 
   public mounted() {
-    this.getCars();
+    this.getRoutes();
   }
 
-  public getCars() {
-    http.get('/cars').then((res: any) => {
-      this.cars = res.cars;
+  public getRoutes() {
+    http.get('/routes').then((res: any) => {
+      this.routes = res.routes;
     });
   }
 
-  public deleteCar(id: any, index: number) {
-    http.delete(`/cars/${id}`).then(() => {
+  public deleteRoute(id: any, index: number) {
+    http.delete(`/routes/${id}`).then(() => {
       console.info(`${id} deleted`);
-      this.cars.splice(index, 1);
+      this.routes.splice(index, 1);
     });
   }
 
-  public searchCars() {
+  public searchRoutes() {
     const req: any = {};
 
     Object.entries(this.searchPattern).forEach(([key, value]) => {
@@ -133,24 +133,24 @@ export default class Cars extends Vue {
 
     const query = qs.stringify(req);
 
-    http.get(query.length ? `/cars?${query}` : '/cars').then((res: any) => {
-      this.cars = res.cars;
+    http.get(query.length ? `/routes?${query}` : '/routes').then((res: any) => {
+      this.routes = res.routes;
     });
   }
 }
 
 type SearchPattern = {
-  numberPlate: string;
+  departure: string;
+  arrival: string;
   status: string;
   type: string;
-  modelType: string;
 };
 
 </script>
 
 <style lang="sass">
 @import "../_sass/variables"
-.cars-wrapper
+.routes-wrapper
   height: 100wh
   width: 100%
   display: flex
@@ -195,7 +195,7 @@ nav
   border-radius: 5px 5px 0px 0px
   background: $lightgray
   .btn-black
-    width: 65px
+    width: 75px
     height: 40px
     background: $black
     color: $white
@@ -207,18 +207,18 @@ nav
     align-items: center
     cursor: pointer
 
-.cars
+.routes
   overflow: auto
   max-height: 450px
 
-.car
+.route
   display: flex
   flex-direction: row
   justify-content: flex-start
   align-items: center
   height: 100%
 
-.car-instance-wrapper
+.route-instance-wrapper
   width: 100%
   display: flex
   justify-content: flex-start
@@ -229,7 +229,7 @@ nav
   &:hover
     box-shadow: 0 0 2px rgba(0,0,0,0.5)
 
-.car-column
+.route-column
   width: 150px
   margin-left: 5px
   &-count

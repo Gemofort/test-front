@@ -118,4 +118,5 @@ export default class AppSelect extends Vue {
   color: $dark
   line-height: 120%
   margin-bottom: 10px
+  margin-top: 20px
 </style>
